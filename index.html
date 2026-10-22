@@ -1,63 +1,151 @@
-
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Jiahao Liu | Portfolio</title>
-  <style>
-    body {
-      max-width: 850px;
-      margin: 70px auto;
-      padding: 0 24px;
-      font-family: Arial, sans-serif;
-      line-height: 1.7;
-      color: #202938;
-    }
-    h1 { font-size: 40px; }
-    h2 { margin-top: 36px; }
-    a { color: #1769aa; }
-    .project {
-      border-left: 3px solid #1769aa;
-      padding: 4px 18px;
-      margin: 20px 0;
-    }
-  </style>
+  <meta name="description" content="Jiahao Liu's portfolio in quantum sensing, electronics engineering, and life outside the lab.">
+  <meta name="theme-color" content="#101827">
+  <title>Jiahao Liu — Research & Engineering Portfolio</title>
+  <link rel="stylesheet" href="styles.css">
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(', '\\)'], ['$', '$']], displayMath: [['\\[', '\\]'], ['$$', '$$']] },
+      options: { skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'] }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <script defer src="content.js"></script>
+  <script defer src="app.js"></script>
 </head>
 <body>
-  <h1>Jiahao Liu</h1>
-  <p>Quantum Sensing | Electronics | Experimental Physics</p>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <a class="wordmark" href="#home" aria-label="Jiahao Liu home">JL<span>.</span></a>
+    <button class="menu-toggle" id="menu-toggle" aria-expanded="false" aria-controls="main-nav">Menu</button>
+    <nav id="main-nav" class="main-nav" aria-label="Main navigation">
+      <a href="#quantum">Quantum research</a>
+      <a href="#electronics">Electronics projects</a>
+      <a href="#about">About me</a>
+      <a href="#contact" class="nav-contact">Contact</a>
+    </nav>
+  </header>
 
-  <p>
-    MSc student in Quantum Information Science at
-    the University of Copenhagen and DTU.
-  </p>
+  <main id="main">
+    <section class="hero section-wrap" id="home">
+      <div class="hero-copy">
+        <p class="eyebrow"><span class="status-dot"></span> Research · Engineering · Exploration</p>
+        <h1>Jiahao Liu</h1>
+        <p class="hero-lead">I build and investigate systems at the intersection of <strong>quantum sensing</strong>, <strong>electronics</strong>, and experimental physics.</p>
+        <p class="hero-body">MSc student in Quantum Information Science at the University of Copenhagen and the Technical University of Denmark. This portfolio documents projects, methods, results, and things I am learning along the way.</p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="#quantum">Explore projects <span aria-hidden="true">↘</span></a>
+          <a class="button button-quiet" href="#about">A little about me</a>
+        </div>
+      </div>
+      <div class="hero-art" aria-label="Decorative illustration of a diamond lattice and circuit traces">
+        <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
+        <div class="diamond-core"><span>NV</span></div>
+        <div class="circuit circuit-a"></div><div class="circuit circuit-b"></div>
+        <span class="art-label label-one">SPIN CONTROL</span>
+        <span class="art-label label-two">HARDWARE</span>
+        <span class="art-label label-three">MEASUREMENT</span>
+      </div>
+    </section>
 
-  <h2>Quantum Research</h2>
-  <div class="project">
-    <h3>Intracellular Nanodiamond Sensing</h3>
-    <p>Quantum sensing with NV centres, thermal echo
-    protocols and T1 relaxometry.</p>
-    <a href="https://github.com/">Project link</a>
-  </div>
+    <section class="intro-strip">
+      <div><span class="strip-number">01</span><span>Understand the physics</span></div>
+      <div><span class="strip-number">02</span><span>Build the experiment</span></div>
+      <div><span class="strip-number">03</span><span>Measure, analyse, improve</span></div>
+    </section>
 
-  <div class="project">
-    <h3>Microwave Antenna Design</h3>
-    <p>Electromagnetic simulation and microwave
-    antenna design for NV-centre control.</p>
-    <a href="https://github.com/">Project link</a>
-  </div>
+    <section class="portfolio-section section-wrap" id="quantum">
+      <div class="section-heading">
+        <div><p class="eyebrow">01 / Research</p><h2>Quantum research</h2></div>
+        <p class="section-intro">Quantum sensors, spin dynamics, microwave fields, optics, and experimental control. Each project can contain as many images, equations, notes, and links as needed.</p>
+      </div>
+      <div class="project-grid" id="quantum-grid"></div>
+    </section>
 
-  <h2>Electronics</h2>
-  <div class="project">
-    <h3>Embedded Systems and PCB Design</h3>
-    <p>Embedded firmware, hardware prototyping,
-    power electronics and EMC testing.</p>
-    <a href="https://github.com/">Project link</a>
-  </div>
+    <section class="portfolio-section section-wrap section-tint" id="electronics">
+      <div class="section-heading">
+        <div><p class="eyebrow">02 / Engineering</p><h2>Electronics projects</h2></div>
+        <p class="section-intro">Embedded systems, PCB design, power electronics, sensor interfaces, testing, and engineering problem-solving.</p>
+      </div>
+      <div class="project-grid" id="electronics-grid"></div>
+    </section>
 
-  <h2>Contact</h2>
-  <p>Email: your.email@example.com</p>
-  <p><a href="https://www.linkedin.com/">LinkedIn</a></p>
+    <section class="about-section section-wrap" id="about">
+      <div class="section-heading">
+        <div><p class="eyebrow">03 / Beyond the lab</p><h2>About me</h2></div>
+        <p class="section-intro">Curiosity does not stop when the instruments are switched off. I also enjoy cooking, biking, and spending time in nature.</p>
+      </div>
+      <div class="about-grid">
+        <article class="about-card">
+          <div class="about-icon" aria-hidden="true">⌁</div>
+          <h3>Cooking</h3>
+          <p>Experimenting with recipes, ingredients, and techniques. Cooking is another way to learn through iteration: make a hypothesis, try it, taste, and adjust.</p>
+          <div class="photo-slot"><img src="assets/images/cooking.jpg" alt="Add a cooking photo" onerror="this.style.display='none'; this.nextElementSibling.style.display='grid'"><div class="photo-placeholder">Add a photo<br><small>assets/images/cooking.jpg</small></div></div>
+        </article>
+        <article class="about-card">
+          <div class="about-icon" aria-hidden="true">↗</div>
+          <h3>Biking</h3>
+          <p>Exploring places by bicycle, getting outside, and enjoying the slower details of a route that are easy to miss from a car or train.</p>
+          <div class="photo-slot"><img src="assets/images/biking.jpg" alt="Add a biking photo" onerror="this.style.display='none'; this.nextElementSibling.style.display='grid'"><div class="photo-placeholder">Add a photo<br><small>assets/images/biking.jpg</small></div></div>
+        </article>
+        <article class="about-card">
+          <div class="about-icon" aria-hidden="true">✳</div>
+          <h3>Nature & environment</h3>
+          <p>I value time outdoors and an awareness of the environments we share. This space can hold nature photography, bike-trip notes, and small observations.</p>
+          <div class="photo-slot"><img src="assets/images/nature.jpg" alt="Add a nature photo" onerror="this.style.display='none'; this.nextElementSibling.style.display='grid'"><div class="photo-placeholder">Add a photo<br><small>assets/images/nature.jpg</small></div></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="working-notes section-wrap">
+      <div class="notes-copy">
+        <p class="eyebrow">A living portfolio</p>
+        <h2>Built to grow with the work.</h2>
+        <p>Add a new project by editing one entry in <code>content.js</code>. Add as many image paths, explanations, equations, and external links as you need. The layout is generated from the content, so you do not have to redesign the page for each new experience.</p>
+      </div>
+      <div class="notes-features">
+        <div><span>↗</span><div><strong>Flexible image galleries</strong><small>Multiple images per project, with captions.</small></div></div>
+        <div><span>∑</span><div><strong>Readable mathematics</strong><small>LaTeX equations rendered with MathJax.</small></div></div>
+        <div><span>↗</span><div><strong>Links & documents</strong><small>Connect papers, reports, GitHub, and videos.</small></div></div>
+      </div>
+    </section>
+
+    <section class="contact-section section-wrap" id="contact">
+      <div>
+        <p class="eyebrow">Get in touch</p>
+        <h2>Interested in a project?</h2>
+        <p>For research, engineering, or collaboration enquiries, you can add your preferred contact details and professional links here.</p>
+      </div>
+      <div class="contact-links" id="contact-links"></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <span>© <span id="year"></span> Jiahao Liu</span>
+    <span>Made to document the process, not just the result.</span>
+    <a href="#home">Back to top ↑</a>
+  </footer>
+
+  <dialog class="project-dialog" id="project-dialog" aria-labelledby="dialog-title">
+    <button class="dialog-close" id="dialog-close" aria-label="Close project details">×</button>
+    <div id="dialog-content"></div>
+  </dialog>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const toggle = document.getElementById('menu-toggle');
+      const nav = document.getElementById('main-nav');
+      toggle.addEventListener('click', () => {
+        const open = nav.classList.toggle('is-open');
+        toggle.setAttribute('aria-expanded', String(open));
+      });
+      nav.querySelectorAll('a').forEach(a => a.addEventListener('click', () => {
+        nav.classList.remove('is-open'); toggle.setAttribute('aria-expanded', 'false');
+      }));
+    });
+  </script>
 </body>
 </html>
