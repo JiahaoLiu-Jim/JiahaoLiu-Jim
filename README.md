@@ -12,7 +12,7 @@ A static portfolio for GitHub Pages. No database, server subscription, or build 
 
 ## Everyday editing
 
-- Add a post: Admin → Posts → Add post → choose a section → enter a title, summary, and body → upload up to 20 photos → Set as cover → Save locally.
+- Add a post: Admin → Posts → Add post → choose a section → enter a title, summary, and body → upload up to 20 photos and videos combined → Set as cover → Save locally.
 - Format text with bold, italic, headings, lists, and links. Pasted text becomes plain text for consistent formatting.
 - Upload JPG, PNG, or WebP images smaller than 30 MB each. They are converted to JPEG with a maximum dimension of 1600 pixels. Add captions, reorder, and remove photos through the editor.
 - Manage sections under Sections / Sub-websites. Use Add section and ↑ ↓ to reorder. Move or delete posts before deleting their section.
@@ -29,11 +29,11 @@ Saving locally does not publish changes. Visitors see updates only after you upl
 
 Export reads up to four files at a time, displays progress, and reports a timeout if a file takes more than 20 seconds. Photos are stored in the ZIP without additional compression.
 
-Photos are exported to assets/ and content to content.js. Removed photos may remain in the repository from a previous upload. You can delete unused files manually; they no longer appear on the website.
+Media files are exported to assets/ and content to content.js. Removed photos may remain in the repository from a previous upload. You can delete unused files manually; they no longer appear on the website.
 
 ## Backups
 
-Local content uses IndexedDB and belongs to the current browser and website address. Download a content backup under Export & publish before clearing browser data or changing computers. Backups include photos and account settings; restoring one replaces local content. Avoid private browsing for long-term editing.
+Local content uses IndexedDB and belongs to the current browser and website address. Download a content backup under Export & publish before clearing browser data or changing computers. Backups include photos, videos, and account settings; restoring one replaces local content. Avoid private browsing for long-term editing.
 
 When switching computers, import the latest backup to avoid overwriting newer edits. A newer published version takes precedence over an older local version.
 
@@ -58,3 +58,11 @@ Opening index.html directly lets you view the page, but editing and export requi
 ## Profile photo
 
 Open Admin → Home & contact → Your photo. Upload or replace your photo, or select Remove photo. Select Save locally, then export and upload the website to publish. The photo appears beside your introduction and is included in content backups and website exports. Existing content files without a profile photo remain compatible.
+
+## Photos and videos in posts
+
+Use Choose photos or videos in any post. You can select photos and videos together, up to 20 items per post. Both use the same caption, Set as cover, reorder, and Remove controls. Videos use an automatically generated preview image when selected as a cover. Visitors can play videos in the detail gallery with standard controls.
+
+Supported videos: MP4 (H.264 recommended) and WebM, up to 20 MB each. Videos are kept in their original format without transcoding or recompression. If your browser cannot decode a video, the editor asks you to use a supported format. Profile photos remain image-only.
+
+Videos and their preview images are included in backups and exported websites. Large collections may take longer to save or export and use more browser storage. Save and publish through the same workflow as photos. Existing photo-only posts and backups remain compatible.
