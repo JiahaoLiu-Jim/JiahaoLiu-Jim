@@ -39,7 +39,7 @@ When switching computers, import the latest backup to avoid overwriting newer ed
 
 ## Updating the English interface
 
-For an existing website, replace app.js, index.html, and README.md. Keep your existing content.js and assets/ folder to preserve posts, photos, and account settings. Save open edits before refreshing.
+For an existing website, replace app.js, index.html, styles.css, and README.md. Keep your existing content.js and assets/ folder to preserve posts, photos, and account settings. Save open edits before refreshing.
 
 ## Local preview
 
@@ -53,3 +53,4 @@ Opening index.html directly lets you view the page, but editing and export requi
 - The original files contained no photos. Initial cards use abstract placeholders; upload your own photos through the editor.
 - Original research descriptions, project links, and formula text are preserved. Formulas display as LaTeX source.
 - System fonts are used if Google Fonts is unavailable.
+

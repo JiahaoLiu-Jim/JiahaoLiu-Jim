@@ -36,7 +36,7 @@ async function imageData(file){if(!['image/jpeg','image/png','image/webp'].inclu
 async function exportRead(url,label){
   const controller=new AbortController();
   const timer=setTimeout(()=>controller.abort(),20000);
-  try{const r=await fetch(url,{signal:controller.signal});if(!r.ok)throw Error('HTTP '+r.status);return await r.blob();}
+  try{const r=await fetch(url,{signal:controller.signal,cache:'no-cache'});if(!r.ok)throw Error('HTTP '+r.status);return await r.blob();}
   catch(err){throw Error(label+' could not be loaded'+(err.name==='AbortError'?' (timed out after 20 seconds)':': '+err.message)+'. Check your connection and confirm the file exists, then try again.');}
   finally{clearTimeout(timer);}
 }
@@ -101,3 +101,4 @@ document.addEventListener('keydown',e=>{if(e.target.matches('[data-photo]')&&['E
 window.addEventListener('beforeunload',e=>{if(dirty||busy){e.preventDefault();e.returnValue='';}});
 window.addEventListener('hashchange',()=>{if(busy||!canLeave()){history.replaceState(null,'',lastHash||'#/');return;}lastHash=location.hash;dirty=false;draft=null;render();window.scrollTo(0,0);$('#main').focus();});
 openDB().catch(()=>notice('Local browser storage is unavailable. Your edits cannot be saved.')).finally(render);
+
