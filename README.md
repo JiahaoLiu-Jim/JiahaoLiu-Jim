@@ -1,83 +1,45 @@
-# Jiahao Liu — Portfolio website
+# Jiahao Liu — 个人网站
 
-A responsive static portfolio for GitHub Pages with three main areas:
-1. Quantum research
-2. Electronics projects
-3. About me (cooking, biking, nature)
+纯静态网站，可直接放在 GitHub Pages，无需数据库、服务器或订阅服务。
 
-## Publish on GitHub Pages
+## 首次上线
 
-1. Extract the ZIP.
-2. Upload all files and folders into the root of your GitHub Pages repository.
-3. Keep `index.html`, `styles.css`, `content.js`, and `app.js` at the repository root.
-4. Commit the changes.
-5. In repository Settings → Pages, use `Deploy from a branch`, branch `main`, folder `/ (root)`.
-6. Open your GitHub Pages URL after deployment completes.
+1. 将本文件所在文件夹内的所有内容上传到 GitHub 仓库根目录。保留 vendor 文件夹结构。不要只上传 ZIP，也不要额外套一层文件夹。
+2. 仓库 Settings → Pages → Deploy from a branch → main → /(root) → Save。
+3. 等待部署完成，访问 GitHub 显示的网址。项目仓库网址通常为 https://你的用户名.github.io/仓库名/。
+4. 网页右上角「管理」进入登录。初始凭据见交付说明；密码在 content.js 中仅保存加盐 SHA-256 哈希。
+5. 在「账号密码」修改密码后，导出发布包并上传，完成更新。
 
-## Add a project
+## 日常使用（无需改代码）
 
-Edit `content.js`. Add a new object inside either `quantum` or `electronics`. Duplicate an existing object and change its `id`, title, summary, tags, sections, images, and links.
+- 添加帖子：管理 → 帖子 → 添加帖子 → 选择栏目 → 写标题、简介、正文 → 上传最多 20 张照片 → 点「设为封面」→ 保存到本机。
+- 编辑文字：正文支持粗体、斜体、小标题、列表和链接，可直接粘贴文字。为保持统一样式，粘贴会转为纯文本。
+- 照片：支持 JPG、PNG、WebP，自动压缩为最长边 1600 像素 JPEG；原图小于 30 MB。可逐张写说明、调整顺序、删除。
+- 栏目：栏目 / Sub-websites → 添加栏目；↑ ↓ 排序。删除栏目之前，先移动或删除其中的帖子。
+- 帖子顺序：每个栏目内用 ↑ ↓ 按钮调整。
+- 个人介绍和联系方式：在「首页与联系方式」修改；空联系方式不显示。
+- 点击卡片封面、标题或 Explore project 会进入独立详情链接；详情照片支持点击放大。
+- 保存到本机后，点击导航栏可预览；退出管理会恢复显示已发布内容。
 
-A project object supports:
-- `title`, `date`, `role`, `summary`, `tags`
-- `cover`: path to a cover image
-- `sections`: any number of text sections, bullet lists, and LaTeX formulas
-- `images`: any number of images with captions
-- `links`: any number of external links
+## 发布修改
 
-Example:
-```js
-{
-  id: "my-new-project",
-  title: "My New Project",
-  date: "2027",
-  role: "Independent project",
-  summary: "A short introduction.",
-  tags: ["Python", "Experiment"],
-  cover: "assets/images/my-project-cover.jpg",
-  sections: [
-    { heading: "Background", text: "Explain the problem here." },
-    { heading: "Method", bullets: ["Step one", "Step two"] },
-    { heading: "Theory", text: "Add a formula:", formula: "\\[ H = \\hbar \\omega \\sigma_z/2 \\]" }
-  ],
-  images: [
-    { src: "assets/images/my-project-01.jpg", alt: "Setup overview", caption: "Experimental setup." },
-    { src: "assets/images/my-project-02.png", alt: "Measurement result", caption: "Measured response." }
-  ],
-  links: [
-    { label: "Report PDF", url: "assets/reports/my-report.pdf" },
-    { label: "GitHub repository", url: "https://github.com/your-account/your-repo" }
-  ]
-}
-```
+管理 → 导出与发布 → 导出完整发布包（ZIP）。解压，将里面的文件和文件夹上传到原 GitHub 仓库，替换同名文件并 Commit changes。等待 Pages 部署。
 
-## Add images
+本机保存 ≠ 已公开发布。只有把发布包上传 GitHub 后，其他访客才能看到修改。网页不会要求 GitHub token，也不会自动写入仓库。
 
-1. Put image files in `assets/images/`.
-2. Add the relative path to the project's `cover` or `images` array in `content.js`.
-3. Use as many image objects as needed. The layout automatically creates a responsive gallery.
-4. Prefer web-friendly JPG/WebP for photos and PNG/SVG for diagrams. There is no hard-coded photo count in the template, but GitHub has repository/file size limits. For very large images or many large datasets, use compressed images or link to an external storage/archive.
+照片在发布包中存放于 assets/，内容存放于 content.js。移除帖子后旧照片可能仍留在 GitHub 仓库，可在仓库中手动删除不再需要的旧图片；未删除不影响展示。
 
-## Add LaTeX formulas
+本机内容使用 IndexedDB 保存，只对当前浏览器、网址有效。清理浏览器、换电脑前请在「导出与发布」下载内容备份；备份包括照片与账号设置，恢复时会覆盖本机内容。无痕模式不适合长期编辑。换电脑请先导入最新备份，避免覆盖更新内容。已发布版本时间较新时优先使用已发布版本。
 
-MathJax is loaded from a CDN. Use LaTeX strings in a section's `formula` field, e.g.:
-```js
-formula: "\\[ \\Omega = \\gamma_e B_{1,\\perp}, \\qquad t_\\pi = \\frac{\\pi}{\\Omega}. \\]"
-```
-Inline LaTeX can be written in a section's `text` string as `\\(T_1\\)` or `$T_1$`. Formula rendering requires an internet connection to load MathJax.
+## 本地预览
 
-## Personalise before publishing
+可直接打开 index.html 查看外观，但完整管理、导出功能应从 HTTP / HTTPS 地址打开。已安装 Python 时，在本文件夹运行 `python -m http.server 8765`，然后访问 http://localhost:8765 。GitHub Pages 上直接使用即可，不需要本地启动服务。
 
-- Replace `your.email@example.com` in `content.js` with your preferred public contact email.
-- Replace GitHub and LinkedIn placeholder links.
-- Add your own approved photos to `assets/images/`.
-- Check all company/research content before publishing; do not upload confidential schematics, unpublished data, or material you do not have permission to share.
-- Review project descriptions and metrics for accuracy before making the site public.
+## 技术与限制
 
-## File map
-
-- `index.html`: page structure
-- `styles.css`: design and responsive layout
-- `content.js`: all project content, formulas, image paths, links, and contact details
-- `app.js`: builds project cards and detail views
-- `assets/images/`: add your own images here
+- 无构建步骤；HTML、CSS、JavaScript；JSZip 3.10.1（MIT，库文件含授权声明）。
+- 前端密码只避免误操作。访问者可以查看全部公开内容并绕过前端校验；它不授予修改 GitHub 仓库的权限。不要用于保护私密内容。
+- 页面路径采用 #/category/… 和 #/post/…，支持 GitHub Pages 子目录与刷新。
+- 原始输入文件夹没有照片，因此初始卡片使用抽象图形；请通过管理界面上传自己的照片。
+- 原有科研文字、项目链接和公式文本已迁移。公式当前以 LaTeX 原文显示。
+- Google Fonts 不可用时自动回退系统字体，不影响操作。

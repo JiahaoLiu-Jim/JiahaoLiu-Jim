@@ -1,75 +1,103 @@
-function escapeHTML(value = "") {
-  return String(value).replace(/[&<>"']/g, ch => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-  }[ch]));
+'use strict';
+const $=s=>document.querySelector(s), esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const clone=x=>JSON.parse(JSON.stringify(x));
+let data=clone(window.SITE_DATA),localData=null,logged=false,tab='posts',draft=null,dirty=false,busy=false,db;
+const uid=()=>crypto.randomUUID();
+function safeURL(s){try{const u=new URL(s,location.href);return ['http:','https:','mailto:'].includes(u.protocol)||(/^data:image\/(jpeg|png|webp);base64,/.test(s))?s:'#';}catch{return '#';}}
+function sanitize(html){const t=document.createElement('template');t.innerHTML=html;const allowed=['P','BR','B','STRONG','I','EM','U','H2','H3','UL','OL','LI','BLOCKQUOTE','A','DIV','SUB','SUP'];function clean(root){for(const n of [...root.children]){if(['SCRIPT','STYLE','IFRAME','OBJECT','SVG','MATH'].includes(n.tagName)){n.remove();continue;}clean(n);if(!allowed.includes(n.tagName)){n.replaceWith(...n.childNodes);continue;}const href=n.tagName==='A'?safeURL(n.getAttribute('href')||''):null;for(const a of [...n.attributes])n.removeAttribute(a.name);if(href){n.setAttribute('href',href);n.setAttribute('target','_blank');n.setAttribute('rel','noopener noreferrer');}}}clean(t.content);return t.innerHTML;}
+function notice(message){$('#notice').textContent=message;$('#notice').style.display='block';clearTimeout(notice.timer);notice.timer=setTimeout(()=>$('#notice').style.display='none',5000);}
+async function openDB(){db=await new Promise((resolve,reject)=>{const r=indexedDB.open('jiahao-portfolio:'+location.pathname,1);r.onupgradeneeded=()=>r.result.createObjectStore('site');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});localData=await new Promise((resolve,reject)=>{const r=db.transaction('site').objectStore('site').get('draft');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});}
+async function persist(next){next.revision=Date.now();await new Promise((resolve,reject)=>{if(!db)return reject(new Error('浏览器无法本机保存，请允许网站存储。'));const tx=db.transaction('site','readwrite');tx.objectStore('site').put(clone(next),'draft');tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);});data=next;localData=clone(next);dirty=false;notice('本机已保存。导出并上传 GitHub 后，访客才能看到更新。');}
+function renderNav(){ $('#nav').innerHTML=data.categories.map(c=>`<a href="#/category/${c.id}" class="${location.hash.endsWith('/'+c.id)?'active':''}">${esc(c.name)}</a>`).join('');}
+function cover(p){const photo=p.photos.find(x=>x.id===p.cover)||p.photos[0];return `<div class="cover" data-kind="${esc(p.category)}">${photo?`<img src="${esc(safeURL(photo.src))}" alt="${esc(photo.caption||p.title)}" loading="lazy">`:`<span class="placeholder" aria-hidden="true">${p.category==='quantum'?'⌘':p.category==='electronics'?'⌁':p.id==='cooking'?'◒':p.id==='biking'?'↗':'❋'}</span>`}</div>`;}
+function card(p){return `<article class="card"><a href="#/post/${p.id}" aria-label="${esc(p.title)}">${cover(p)}</a><div class="meta">${esc(p.role||data.categories.find(c=>c.id===p.category)?.name)}${p.date?' · '+esc(p.date):''}</div><h3><a href="#/post/${p.id}">${esc(p.title)}</a></h3><p>${esc(p.summary)}</p><div class="tags">${p.tags.split(',').filter(x=>x.trim()).map(x=>`<span class="tag">${esc(x.trim())}</span>`).join('')}</div><div class="card-bottom"><a href="#/post/${p.id}">Explore project ↗</a><small>${p.photos.length} photos</small></div></article>`;}
+function category(c,i){return `<section class="wrap section-block"><div class="section-head"><div><p class="eyebrow">0${i+1} / A collection of curiosity</p><h2>${esc(c.name)}</h2></div><p>${esc(c.description)}</p></div><div class="grid">${data.posts.filter(p=>p.category===c.id).map(card).join('')||'<p class="empty">New stories coming soon.</p>'}</div></section>`;}
+function home(){const p=data.profile;return `<section class="wrap hero"><div><div class="eyebrow">Research · Engineering · Exploration</div><h1>${esc(p.name)}<span style="color:#7a9851">.</span></h1><p class="intro">${esc(p.intro)}</p><p>${esc(p.bio)}</p><div class="actions"><a class="button primary" href="#/category/${data.categories[0]?.id||''}">Explore projects ↘</a>${data.categories.some(c=>c.id==='about')?'<a class="button" href="#/category/about">A little about me ↗</a>':''}</div></div><div class="orbital" aria-label="Abstract quantum orbital illustration"><div class="core">NV</div><span class="art-label">FROM IDEAS TO EXPERIMENTS</span></div></section><div class="strip"><div><span>01</span>Understand the physics</div><div><span>02</span>Build the experiment</div><div><span>03</span>Keep exploring</div></div>${data.categories.map(category).join('')}<section class="wrap"><p class="eyebrow">Let's connect</p><h2>Good ideas start with a conversation.</h2><div class="actions">${[['Email',p.email?'mailto:'+p.email:''],['GitHub',p.github],['LinkedIn',p.linkedin]].filter(x=>x[1]).map(([n,u])=>`<a class="button" href="${esc(safeURL(u))}" target="_blank" rel="noopener">${n} ↗</a>`).join('')}</div></section>`;}
+function detail(p){const c=data.categories.find(c=>c.id===p.category);return `<article class="wrap detail"><a class="back" href="#/category/${p.category}">← ${esc(c?.name)}</a><p class="eyebrow" style="margin-top:45px">${esc(p.role)} ${esc(p.date)}</p><h1>${esc(p.title)}</h1><p class="lead">${esc(p.summary)}</p><div class="prose">${sanitize(p.body)}</div>${p.photos.length?`<div class="section-head" style="margin-top:60px"><h2>In pictures</h2><span>${p.photos.length} photographs</span></div><div class="gallery">${p.photos.map((ph,i)=>`<figure><img data-photo="${i}" src="${esc(safeURL(ph.src))}" alt="${esc(ph.caption||p.title+' — '+(i+1))}" loading="lazy" tabindex="0" role="button"><figcaption>${esc(ph.caption)}</figcaption></figure>`).join('')}</div>`:''}</article>`;}
+function field(label,name,value='',type='text'){return `<label for="${name}">${label}</label><input id="${name}" name="${name}" type="${type}" value="${esc(value)}">`;}
+function login(){return `<div class="wrap login"><p class="eyebrow">Personal workspace</p><h1>欢迎回来。</h1><p class="help">登录后，用简单的编辑器管理你的网页。</p><form id="login"><label for="username">管理员账号</label><input id="username" autocomplete="username" required><label for="password">密码</label><input id="password" type="password" autocomplete="current-password" required><div class="actions"><button class="primary">登录管理</button></div><p id="login-error" role="alert"></p></form><p class="help">这是纯前端管理入口；编辑结果先保存在此浏览器。</p></div>`;}
+function adminShell(body){return `<div class="wrap admin"><div class="section-head"><div><p class="eyebrow">Your personal workspace</p><h1>内容管理</h1></div><button data-action="logout">退出登录</button></div><div class="notice-inline">编辑 → 本机保存 → 导出发布包 → 上传 GitHub。<br>当前为本机预览，未上传的修改不会影响访客。</div><div class="admin-tabs">${[['posts','帖子'],['categories','栏目 / Sub-websites'],['profile','首页与联系方式'],['publish','导出与发布'],['account','账号密码']].map(([id,t])=>`<button data-tab="${id}" class="${tab===id?'selected':''}">${t}</button>`).join('')}</div>${body}</div>`;}
+function rows(items,type){return items.map((x,i)=>`<div class="row"><div class="row-title"><strong>${esc(x.title||x.name)}</strong><small>${type==='post'?esc(data.categories.find(c=>c.id===x.category)?.name)+' · '+x.photos.length+' 张照片':esc(x.description)}</small></div><div class="actions"><button data-action="up-${type}" data-id="${x.id}" ${i===0?'disabled':''} aria-label="上移 ${esc(x.title||x.name)}">↑</button><button data-action="down-${type}" data-id="${x.id}" ${i===items.length-1?'disabled':''} aria-label="下移 ${esc(x.title||x.name)}">↓</button><button data-action="edit-${type}" data-id="${x.id}">编辑</button><button class="danger" data-action="delete-${type}" data-id="${x.id}">删除</button></div></div>`).join('');}
+function dashboard(){if(draft)return postEditor();let body='';if(tab==='posts')body=`<div class="actions"><button class="primary" data-action="new-post" ${data.categories.length?'':'disabled'}>＋ 添加帖子</button></div><p class="help">先选栏目，再添加文字和照片。↑ ↓ 调整同一栏目中的展示顺序。</p>${data.categories.map(c=>`<section class="panel"><h2>${esc(c.name)}</h2>${rows(data.posts.filter(p=>p.category===c.id),'post')||'<p class="help">还没有帖子，点击「添加帖子」。</p>'}</section>`).join('')}`;
+if(tab==='categories')body=`<button class="primary" data-action="new-category">＋ 添加栏目</button><div class="panel">${rows(data.categories,'category')}</div><div id="category-editor"></div>`;
+if(tab==='profile')body=`<form id="profile-form" class="panel"><h2>首页介绍</h2>${field('姓名','name',data.profile.name)}<label for="intro">一句话介绍</label><textarea id="intro">${esc(data.profile.intro)}</textarea><label for="bio">个人简介</label><textarea id="bio">${esc(data.profile.bio)}</textarea>${field('联系邮箱（留空则隐藏）','email',data.profile.email,'email')}${field('GitHub 链接','github',data.profile.github,'url')}${field('LinkedIn 链接','linkedin',data.profile.linkedin,'url')}<div class="actions"><button class="primary">保存到本机</button></div></form>`;
+if(tab==='publish')body=`<section class="panel"><h2>把修改发布到 GitHub</h2><p class="help">1. 点击下方按钮，下载包含整个网站的 ZIP。<br>2. 解压 ZIP，进入你的网站仓库，选择 Add file → Upload files。<br>3. 把解压后的文件和文件夹拖入，替换同名文件，点击 Commit changes。<br>4. 等待 GitHub Pages 完成部署，再刷新公开网址。</p><button class="primary" data-action="export">↓ 导出完整发布包（ZIP）</button><p class="help">发布包包含当前内容、所有照片及账号密码哈希。请上传解压后的内容，不要只上传 ZIP。</p><p id="export-status" role="status"></p></section><section class="panel"><h2>备份与恢复</h2><p class="help">本机数据只在当前浏览器中。换电脑或清理浏览器前，请下载备份。</p><button data-action="backup">下载内容备份</button><label for="import">从内容备份恢复（将替换当前本机内容）</label><input type="file" id="import" accept="application/json,.json"><div class="actions"><button data-action="reset-local" class="danger">放弃本机修改，恢复已发布版本</button></div></section>`;
+if(tab==='account')body=`<form id="account-form" class="panel"><h2>修改管理员账号和密码</h2>${field('账号','new-username',data.auth.username)}${field('当前密码','old-password','','password')}${field('新密码（至少 8 位）','new-password','','password')}${field('再次输入新密码','confirm-password','','password')}<p class="help">修改后请导出并上传 GitHub，其他设备才会使用新密码。前端验证仅用于避免误操作，不提供真正的访问保护。</p><button class="primary">保存账号密码</button></form>`;return adminShell(body);}
+function postEditor(){return adminShell(`<form id="post-form"><div class="panel"><h2>${data.posts.some(p=>p.id===draft.id)?'编辑帖子':'添加帖子'}</h2><div class="two"><div><label for="category">放在哪个栏目？</label><select id="category">${data.categories.map(c=>`<option value="${c.id}" ${draft.category===c.id?'selected':''}>${esc(c.name)}</option>`).join('')}</select></div><div>${field('标题 *','title',draft.title)}</div></div><label for="summary">简短介绍（显示在封面卡片上）</label><textarea id="summary">${esc(draft.summary)}</textarea><div class="two"><div>${field('时间（可选）','date',draft.date)}</div><div>${field('身份 / 项目类型（可选）','role',draft.role)}</div></div>${field('标签（英文逗号分隔，可选）','tags',draft.tags)}<label for="body-editor">正文</label><div class="toolbar" role="toolbar" aria-label="文字格式"><button type="button" data-format="bold"><b>粗体</b></button><button type="button" data-format="italic"><i>斜体</i></button><button type="button" data-format="formatBlock" data-value="h2">小标题</button><button type="button" data-format="formatBlock" data-value="p">正文</button><button type="button" data-format="insertUnorderedList">• 列表</button><button type="button" data-format="createLink">链接</button><button type="button" data-format="undo">撤销</button></div><div id="body-editor" class="editor" contenteditable="true" aria-label="正文编辑器" role="textbox" aria-multiline="true">${sanitize(draft.body)}</div></div><div class="panel"><h2>照片与封面 <span id="photo-count"></span></h2><p class="help">最多 20 张。选择「设为封面」，↑ ↓ 调整照片顺序，每张照片都可添加说明。上传时自动缩小图片，方便网页加载。</p><div class="upload"><label for="photos">＋ 选择照片（可多选 JPG / PNG / WebP）</label><input id="photos" type="file" accept="image/jpeg,image/png,image/webp" multiple><p id="upload-status" role="status"></p></div><div id="photo-list" class="photo-list"></div></div><div class="save-bar"><button class="primary" id="save-post">保存到本机</button><button type="button" data-action="cancel-post">取消</button><span class="help">保存后可预览，再导出发布。</span></div></form>`);}
+function photosUI(){if(!draft)return;$('#photo-count').textContent=`${draft.photos.length} / 20`;$('#photo-list').innerHTML=draft.photos.map((p,i)=>`<div class="photo-item ${draft.cover===p.id?'chosen':''}"><img src="${esc(safeURL(p.src))}" alt="照片 ${i+1}"><label for="caption-${p.id}">照片说明</label><input id="caption-${p.id}" data-caption="${p.id}" value="${esc(p.caption)}"><div class="actions"><button type="button" data-action="cover" data-id="${p.id}">${draft.cover===p.id?'✓ 封面':'设为封面'}</button><button type="button" data-action="up-photo" data-id="${p.id}" ${i===0?'disabled':''} aria-label="上移照片">↑</button><button type="button" data-action="down-photo" data-id="${p.id}" ${i===draft.photos.length-1?'disabled':''} aria-label="下移照片">↓</button><button type="button" data-action="remove-photo" data-id="${p.id}">移除</button></div></div>`).join('');}
+let lastHash=location.hash;
+function render(){renderNav();const parts=location.hash.slice(2).split('/');if(parts[0]==='admin')$('#main').innerHTML=logged?dashboard():login();else if(parts[0]==='category'){const c=data.categories.find(c=>c.id===parts[1]);$('#main').innerHTML=c?`<div class="wrap" style="padding-bottom:0"><a class="back" href="#/">← Home</a></div>`+category(c,data.categories.indexOf(c)):'<div class="wrap">Collection not found. <a href="#/">Home</a></div>';}else if(parts[0]==='post'){const p=data.posts.find(p=>p.id===parts[1]);$('#main').innerHTML=p?detail(p):'<div class="wrap">Post not found. <a href="#/">Home</a></div>';}else $('#main').innerHTML=home();if(draft&&parts[0]==='admin')photosUI();document.title=(parts[0]==='post'?data.posts.find(p=>p.id===parts[1])?.title+' — ':'')+data.profile.name;}
+async function digest(password,auth=data.auth){const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(auth.salt+':'+password));return [...new Uint8Array(bytes)].map(b=>b.toString(16).padStart(2,'0')).join('');}
+function capture(){for(const key of ['title','summary','category','date','role','tags'])draft[key]=$('#'+key).value;draft.body=sanitize($('#body-editor').innerHTML);}
+function canLeave(){return !dirty||confirm('还有尚未保存的编辑，确定放弃吗？');}
+function download(blob,name){const a=document.createElement('a'),url=URL.createObjectURL(blob);a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),30000);}
+function validate(x){if(x?.version!==1||!Array.isArray(x.categories)||!Array.isArray(x.posts)||!x.profile||!x.auth?.hash||!x.auth?.salt||!x.auth?.username)throw Error('备份格式不正确');const ids=new Set(x.categories.map(c=>c.id));if(ids.size!==x.categories.length||new Set(x.posts.map(p=>p.id)).size!==x.posts.length)throw Error('备份含重复标识');for(const c of x.categories)if(!/^[\w-]+$/.test(c.id)||!c.name)throw Error('栏目数据无效');for(const p of x.posts){if(!ids.has(p.category)||!Array.isArray(p.photos)||p.photos.length>20||!/^[\w-]+$/.test(p.id)||typeof p.title!=='string'||typeof p.tags!=='string'||typeof p.body!=='string')throw Error('帖子数据无效或照片超过 20 张');p.body=sanitize(p.body);for(const ph of p.photos)if(!/^[\w-]+$/.test(ph.id)||typeof ph.src!=='string'||safeURL(ph.src)==='#')throw Error('照片数据无效');}return x;}
+async function imageData(file){if(!['image/jpeg','image/png','image/webp'].includes(file.type))throw Error('请使用 JPG、PNG 或 WebP 照片');if(file.size>30*1024*1024)throw Error('单张原始照片请小于 30 MB');const bitmap=await createImageBitmap(file);const scale=Math.min(1,1600/Math.max(bitmap.width,bitmap.height));const c=document.createElement('canvas');c.width=Math.round(bitmap.width*scale);c.height=Math.round(bitmap.height*scale);const ctx=c.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,c.width,c.height);ctx.drawImage(bitmap,0,0,c.width,c.height);bitmap.close();return c.toDataURL('image/jpeg',.82);}
+async function exportRead(url,label){
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),20000);
+  try{const r=await fetch(url,{signal:controller.signal});if(!r.ok)throw Error('HTTP '+r.status);return await r.blob();}
+  catch(err){throw Error(label+'读取失败'+(err.name==='AbortError'?'（超过 20 秒）':'：'+err.message)+'。请检查网络和文件是否存在后重试。');}
+  finally{clearTimeout(timer);}
 }
-function safeURL(value = "") {
-  try {
-    const url = new URL(value, window.location.href);
-    if (["http:", "https:", "mailto:"].includes(url.protocol)) return url.href;
-  } catch (_) {}
-  return "#";
+async function exportSite(){
+  const status=$('#export-status');
+  try{
+    if(location.protocol==='file:')throw Error('请从 GitHub Pages 网址或 localhost 打开网站后导出，不能直接双击 HTML 文件导出。');
+    if(typeof JSZip==='undefined')throw Error('导出组件未加载，请检查 vendor/jszip.min.js 是否已上传。');
+    const zip=new JSZip(),exported=clone(data);
+    const files=['index.html','styles.css','app.js','vendor/jszip.min.js','README.md'];
+    const photos=exported.posts.flatMap(p=>p.photos.map(ph=>({ph,title:p.title})));
+    let done=0,cursor=0,failed=false;
+    const jobs=[...files.map(file=>async()=>{zip.file(file,await exportRead(file,file));}),...photos.map(({ph,title})=>async()=>{
+      const b=await exportRead(ph.src,'帖子「'+title+'」的照片'),ext=b.type==='image/png'?'png':b.type==='image/webp'?'webp':'jpg';
+      const path='assets/'+ph.id+'.'+ext;
+      // Photos are already compressed: storing them avoids expensive recompression.
+      zip.file(path,b,{compression:'STORE'});ph.src=path;
+    })];
+    status.textContent='正在收集文件：0 / '+jobs.length+'（照片 '+photos.length+' 张）';
+    async function worker(){while(cursor<jobs.length&&!failed){const job=jobs[cursor++];try{await job();done++;if(!failed)status.textContent='正在收集文件：'+done+' / '+jobs.length+'（照片 '+photos.length+' 张）';}catch(err){failed=true;throw err;}}}
+    const results=await Promise.allSettled(Array.from({length:Math.min(4,jobs.length)},worker));
+    const error=results.find(r=>r.status==='rejected');if(error)throw error.reason;
+    zip.file('.nojekyll','');zip.file('content.js','window.SITE_DATA = '+JSON.stringify(exported,null,2)+';\n');
+    status.textContent='文件收集完成，正在生成 ZIP：0%';
+    const blob=await zip.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:1}},meta=>{status.textContent='正在生成 ZIP：'+Math.round(meta.percent)+'%';});
+    download(blob,'jiahao-website-publish.zip');
+    status.textContent='发布包已生成并开始下载（'+(blob.size/1024/1024).toFixed(1)+' MB）。请查看浏览器下载列表，解压后上传到 GitHub。';
+  }catch(err){status.textContent='导出未完成：'+err.message+' 本机已保存的内容仍然保留。';throw err;}
 }
-function renderCard(project, category) {
-  const tags = (project.tags || []).map(tag => `<span class="tag">${escapeHTML(tag)}</span>`).join("");
-  const cover = project.cover ? `<img src="${escapeHTML(project.cover)}" alt="${escapeHTML(project.title)} cover image" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'">` : "";
-  return `<article class="project-card">
-    <div class="project-cover">${cover}<div class="cover-placeholder" style="${project.cover ? "display:none" : ""}"><span>⌘</span>ADD A PROJECT IMAGE</div></div>
-    <div class="project-content">
-      <div class="project-meta"><span>${escapeHTML(project.role || category)}</span><span>${escapeHTML(project.date || "")}</span></div>
-      <h3>${escapeHTML(project.title)}</h3>
-      <p>${escapeHTML(project.summary)}</p>
-      <div class="tag-list">${tags}</div>
-      <div class="card-footer"><button class="text-link" data-project="${escapeHTML(project.id)}" data-category="${escapeHTML(category)}">Explore project ↗</button><span class="project-meta">${(project.images || []).length} images</span></div>
-    </div>
-  </article>`;
-}
-function renderProjects() {
-  const data = window.PORTFOLIO || {};
-  document.getElementById("quantum-grid").innerHTML = (data.quantum || []).map(p => renderCard(p, "Quantum research")).join("") || '<div class="empty-state">Add quantum projects in content.js.</div>';
-  document.getElementById("electronics-grid").innerHTML = (data.electronics || []).map(p => renderCard(p, "Electronics")).join("") || '<div class="empty-state">Add electronics projects in content.js.</div>';
-  const contacts = (data.contact || []).map(c => `<a href="${safeURL(c.url)}" target="${c.url.startsWith("mailto:") ? "_self" : "_blank"}" rel="noopener noreferrer">${escapeHTML(c.label)} ↗</a>`).join("");
-  document.getElementById("contact-links").innerHTML = contacts;
-  document.getElementById("year").textContent = new Date().getFullYear();
-}
-function renderSection(section) {
-  let out = `<section><h3>${escapeHTML(section.heading || "")}</h3>`;
-  if (section.text) out += `<p>${escapeHTML(section.text)}</p>`;
-  if (section.bullets && section.bullets.length) out += `<ul class="detail-list">${section.bullets.map(x => `<li>${escapeHTML(x)}</li>`).join("")}</ul>`;
-  if (section.formula) out += `<div class="equation">${section.formula}</div>`;
-  if (section.html) out += `<div>${section.html}</div>`;
-  out += `</section>`;
-  return out;
-}
-function openProject(id, category) {
-  const all = [...(window.PORTFOLIO.quantum || []), ...(window.PORTFOLIO.electronics || [])];
-  const project = all.find(p => p.id === id);
-  if (!project) return;
-  const dialog = document.getElementById("project-dialog");
-  const imageHTML = (project.images || []).map(image => `<figure>
-    <img src="${escapeHTML(image.src)}" alt="${escapeHTML(image.alt || image.caption || project.title)}" loading="lazy">
-    ${image.caption ? `<figcaption>${escapeHTML(image.caption)}</figcaption>` : ""}
-  </figure>`).join("");
-  const linksHTML = (project.links || []).map((link, i) => `<a class="${i ? "secondary-link" : ""}" href="${safeURL(link.url)}" target="_blank" rel="noopener noreferrer">${escapeHTML(link.label)} ↗</a>`).join("");
-  document.getElementById("dialog-content").innerHTML = `<div class="dialog-inner">
-    <p class="eyebrow">${escapeHTML(category)}${project.date ? " / " + escapeHTML(project.date) : ""}</p>
-    <h2 id="dialog-title">${escapeHTML(project.title)}</h2>
-    <p class="lead">${escapeHTML(project.summary)}</p>
-    ${(project.sections || []).map(renderSection).join("")}
-    ${imageHTML ? `<section><h3>Project gallery</h3><div class="gallery">${imageHTML}</div></section>` : ""}
-    ${linksHTML ? `<div class="detail-links">${linksHTML}</div>` : ""}
-  </div>`;
-  dialog.showModal();
-  if (window.MathJax && window.MathJax.typesetPromise) window.MathJax.typesetPromise([document.getElementById("dialog-content")]);
-}
-document.addEventListener("DOMContentLoaded", () => {
-  renderProjects();
-  document.body.addEventListener("click", event => {
-    const button = event.target.closest("[data-project]");
-    if (button) openProject(button.dataset.project, button.dataset.category);
-  });
-  const dialog = document.getElementById("project-dialog");
-  document.getElementById("dialog-close").addEventListener("click", () => dialog.close());
-  dialog.addEventListener("click", event => { if (event.target === dialog) dialog.close(); });
-  document.addEventListener("keydown", event => { if (event.key === "Escape" && dialog.open) dialog.close(); });
-});
+document.addEventListener('mousedown',e=>{if(e.target.closest('[data-format]'))e.preventDefault();});
+document.addEventListener('input',e=>{if(e.target.closest('#post-form,#profile-form,#account-form,#category-form'))dirty=true;if(e.target.dataset.caption){const p=draft.photos.find(x=>x.id===e.target.dataset.caption);p.caption=e.target.value;}});
+document.addEventListener('paste',e=>{if(e.target.closest('#body-editor')){e.preventDefault();document.execCommand('insertText',false,e.clipboardData.getData('text/plain'));}});
+document.addEventListener('click',async e=>{const button=e.target.closest('button');try{
+if(e.target.matches('[data-photo]')){const p=data.posts.find(p=>p.id===location.hash.split('/')[2]),ph=p.photos[Number(e.target.dataset.photo)];$('#lightbox img').src=safeURL(ph.src);$('#lightbox img').alt=ph.caption||p.title;$('#lightbox p').textContent=ph.caption;$('#lightbox').showModal();return;}
+if(!button)return;if(button.id==='close-lightbox'){$('#lightbox').close();return;}if(busy)return;
+if(button.dataset.format){let value=button.dataset.value;if(button.dataset.format==='createLink'){value=prompt('输入链接（https://…）');if(!value)return;if(!/^https?:\/\//i.test(value))return notice('请填写完整的 https:// 链接');}document.execCommand(button.dataset.format,false,value);dirty=true;return;}
+if(button.dataset.tab){if(!canLeave())return;dirty=false;draft=null;tab=button.dataset.tab;render();return;}
+const a=button.dataset.action,id=button.dataset.id;if(!a)return;if(!logged)return;
+if(a==='logout'){if(!canLeave())return;logged=false;dirty=false;draft=null;data=clone(window.SITE_DATA);render();return;}
+if(a==='new-post'||a==='edit-post'){draft=a==='new-post'?{id:uid(),title:'',summary:'',category:data.categories[0].id,body:'',date:'',role:'',tags:'',photos:[],cover:''}:clone(data.posts.find(p=>p.id===id));dirty=false;render();return;}
+if(a==='cancel-post'){if(canLeave()){draft=null;dirty=false;render();}return;}
+if(['cover','remove-photo','up-photo','down-photo'].includes(a)){capture();const i=draft.photos.findIndex(p=>p.id===id);if(a==='cover')draft.cover=id;if(a==='remove-photo'){draft.photos.splice(i,1);if(draft.cover===id)draft.cover=draft.photos[0]?.id||'';}if(a.endsWith('photo')&&a!=='remove-photo'){const j=i+(a==='up-photo'?-1:1);if(j>=0&&j<draft.photos.length)[draft.photos[i],draft.photos[j]]=[draft.photos[j],draft.photos[i]];}dirty=true;photosUI();return;}
+if(a==='new-category'||a==='edit-category'){const c=data.categories.find(c=>c.id===id)||{id:uid(),name:'',description:''};$('#category-editor').innerHTML=`<form id="category-form" data-id="${c.id}" class="panel"><h2>${a==='new-category'?'添加':'编辑'}栏目</h2>${field('栏目名称','category-name',c.name)}<label for="category-description">栏目介绍</label><textarea id="category-description">${esc(c.description)}</textarea><div class="actions"><button class="primary">保存栏目</button></div></form>`;$('#category-name').focus();return;}
+if(a.startsWith('delete-')){const next=clone(data);if(a==='delete-category'){if(next.posts.some(p=>p.category===id))return notice('请先把该栏目的帖子移动到其他栏目或删除，再删除栏目。');if(!confirm('确定删除这个空栏目吗？'))return;next.categories=next.categories.filter(c=>c.id!==id);}else{if(!confirm('确定删除这个帖子及其照片吗？建议先下载备份。'))return;next.posts=next.posts.filter(p=>p.id!==id);}await persist(next);render();return;}
+if(a.startsWith('up-')||a.startsWith('down-')){const next=clone(data),list=a.endsWith('category')?next.categories:next.posts;let indexes=list.map((x,i)=>i);if(a.endsWith('post'))indexes=indexes.filter(i=>list[i].category===list.find(x=>x.id===id).category);const at=indexes.findIndex(i=>list[i].id===id),other=at+(a.startsWith('up-')?-1:1);if(other>=0&&other<indexes.length){const i=indexes[at],j=indexes[other];[list[i],list[j]]=[list[j],list[i]];await persist(next);render();}return;}
+if(a==='export'){busy=true;button.disabled=true;try{await exportSite();}finally{busy=false;button.disabled=false;}return;}
+if(a==='backup'){const backup=clone(data);for(const p of backup.posts)for(const ph of p.photos)if(!ph.src.startsWith('data:')){const r=await fetch(ph.src);if(!r.ok)throw Error('照片读取失败');const blob=await r.blob();ph.src=await new Promise((res,rej)=>{const f=new FileReader();f.onload=()=>res(f.result);f.onerror=rej;f.readAsDataURL(blob);});}download(new Blob([JSON.stringify(backup)],{type:'application/json'}),'jiahao-content-backup.json');return;}
+if(a==='reset-local'&&confirm('确定放弃本机的所有修改并恢复已发布版本吗？')){await persist(clone(window.SITE_DATA));render();}
+}catch(err){notice('操作未完成：'+err.message);}});
+document.addEventListener('submit',async e=>{e.preventDefault();if(busy)return;const form=e.target,submit=form.querySelector('button[type=submit],button:not([type])');if(submit)submit.disabled=true;try{
+if(form.id==='login'){const auth=(localData&&localData.revision>=window.SITE_DATA.revision?localData:window.SITE_DATA).auth;if($('#username').value.trim()!==auth.username||await digest($('#password').value,auth)!==auth.hash){$('#login-error').textContent='账号或密码不正确';return;}logged=true;data=clone(localData&&localData.revision>=window.SITE_DATA.revision?localData:window.SITE_DATA);render();return;}
+if(!logged)return;const next=clone(data);
+if(form.id==='post-form'){capture();if(!draft.title.trim())throw Error('请填写帖子标题');if(draft.photos.length>20)throw Error('最多上传 20 张照片');const index=next.posts.findIndex(p=>p.id===draft.id);if(index>=0)next.posts[index]=clone(draft);else next.posts.push(clone(draft));await persist(next);draft=null;render();return;}
+if(form.id==='category-form'){const name=$('#category-name').value.trim();if(!name)throw Error('请填写栏目名称');const c={id:form.dataset.id,name,description:$('#category-description').value};const i=next.categories.findIndex(x=>x.id===c.id);if(i<0)next.categories.push(c);else next.categories[i]=c;}
+if(form.id==='profile-form')for(const key of ['name','intro','bio','email','github','linkedin'])next.profile[key]=$('#'+key).value;
+if(form.id==='account-form'){if(await digest($('#old-password').value)!==data.auth.hash)throw Error('当前密码不正确');const pw=$('#new-password').value;if(pw.length<8||pw!==$('#confirm-password').value)throw Error('新密码至少 8 位，并且两次输入一致');if(!$('#new-username').value.trim())throw Error('账号不能为空');next.auth={username:$('#new-username').value.trim(),salt:uid(),hash:''};next.auth.hash=await digest(pw,next.auth);}
+await persist(next);render();
+}catch(err){notice('未保存：'+err.message);}finally{if(submit)submit.disabled=false;}});
+document.addEventListener('change',async e=>{try{if(e.target.id==='photos'){if(busy)return;const files=[...e.target.files];if(draft.photos.length+files.length>20){e.target.value='';throw Error('每篇帖子最多 20 张照片；本次未添加任何照片。');}capture();busy=true;$('#save-post').disabled=true;$('#upload-status').textContent='正在处理照片…';const added=[];try{for(const file of files)added.push({id:uid(),src:await imageData(file),caption:''});draft.photos.push(...added);if(!draft.cover)draft.cover=added[0]?.id||'';dirty=true;photosUI();$('#upload-status').textContent=`已添加 ${added.length} 张照片`;}finally{busy=false;$('#save-post').disabled=false;e.target.value='';}}
+if(e.target.id==='import'){const file=e.target.files[0];if(!file)return;const next=validate(JSON.parse(await file.text()));if(confirm('恢复备份将替换本机全部内容和管理员账号，确定继续吗？')){await persist(next);render();}}}catch(err){notice(err.message);}});
+document.addEventListener('keydown',e=>{if(e.target.matches('[data-photo]')&&['Enter',' '].includes(e.key)){e.preventDefault();e.target.click();}});
+window.addEventListener('beforeunload',e=>{if(dirty||busy){e.preventDefault();e.returnValue='';}});
+window.addEventListener('hashchange',()=>{if(busy||!canLeave()){history.replaceState(null,'',lastHash||'#/');return;}lastHash=location.hash;dirty=false;draft=null;render();window.scrollTo(0,0);$('#main').focus();});
+openDB().catch(()=>notice('浏览器本机存储不可用，管理修改将无法保存。')).finally(render);
