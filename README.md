@@ -66,3 +66,11 @@ Use Choose photos or videos in any post. You can select photos and videos togeth
 Supported videos: MP4 (H.264 recommended) and WebM, up to 20 MB each. Videos are kept in their original format without transcoding or recompression. If your browser cannot decode a video, the editor asks you to use a supported format. Profile photos remain image-only.
 
 Videos and their preview images are included in backups and exported websites. Large collections may take longer to save or export and use more browser storage. Save and publish through the same workflow as photos. Existing photo-only posts and backups remain compatible.
+
+## Gallery layout
+
+Post galleries use a responsive masonry layout. Photos and videos keep their original proportions, and following items fill the available space below shorter items. Layout updates when images load, video dimensions become available, or the window changes size. Narrow screens use one column. Captions and the saved media order are preserved.
+
+## Cover appearance
+
+All post covers now default to Fit entire image, preserving the full photo or video preview without cropping. In the post editor, select a cover and use Cover appearance below the media list. Choose Fill frame to crop, then adjust Horizontal position and Vertical position with the live preview. Select Reset to fit to restore the uncropped default. Save locally and export to publish. Settings travel with the post in backups and exports. Original media files are unchanged.
