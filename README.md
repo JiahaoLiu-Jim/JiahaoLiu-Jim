@@ -54,3 +54,7 @@ Opening index.html directly lets you view the page, but editing and export requi
 - Original research descriptions, project links, and formula text are preserved. Formulas display as LaTeX source.
 - System fonts are used if Google Fonts is unavailable.
 
+
+## Profile photo
+
+Open Admin → Home & contact → Your photo. Upload or replace your photo, or select Remove photo. Select Save locally, then export and upload the website to publish. The photo appears beside your introduction and is included in content backups and website exports. Existing content files without a profile photo remain compatible.
